@@ -1,0 +1,52 @@
+{
+"info": {
+"name": "SGHSS API — Starter",
+"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+},
+"item": [
+{
+"name": "Login (sucesso)",
+"request": {
+"method": "POST",
+"header": [ { "key": "Content-Type", "value": "application/json" } ],
+"url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+"body": { "mode": "raw", "raw": "{\"email\": \"teste@vida.plus\",\"password\": \"Senha@123\"}" }
+},
+"event": [
+{ "listen": "test", "script": { "exec": [
+"pm.test('status 200', function () { pm.response.to.have.status(200); });",
+"pm.test('tem token', function () { pm.expect(pm.response.json().token).to.exist; });"
+] } }
+]
+},
+{
+"name": "Listar prontuários",
+"request": {
+"method": "GET",
+"url": { "raw": "{{baseUrl}}/records?patientId=123", "host": ["{{baseUrl}}"], "path": ["records"], "query": [{"key":"patientId","value":"123"}] }
+},
+"event": [
+{ "listen": "test", "script": { "exec": [
+"pm.test('status 200', function () { pm.response.to.have.status(200); });",
+"pm.test('é array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+] } }
+]
+},
+{
+"name": "Agendar consulta (válido)",
+"request": {
+"method": "POST",
+"header": [ { "key": "Content-Type", "value": "application/json" } ],
+"url": { "raw": "{{baseUrl}}/appointments", "host": ["{{baseUrl}}"], "path": ["appointments"] },
+"body": { "mode": "raw", "raw": "{\"patientId\": 123,\"doctorId\": 45,\"slot\": \"2025-10-24T14:30:00Z\"}" }
+},
+"event": [
+{ "listen": "test", "script": { "exec": [
+"pm.test('status 201', function () { pm.response.to.have.status(201); });",
+"pm.test('resposta tem appointmentId', function () { pm.expect(pm.response.json().appointmentId).to.exist; });"
+] } }
+]
+}
+],
+"variable": [ { "key": "baseUrl", "value": "http://localhost:3000" } ]
+}

@@ -1,0 +1,24 @@
+@startuml Atividades: Login + Visualizar Prontuário (RF002, RF009)
+
+title Atividades: Login + Visualizar Prontuário (RF002, RF009)
+
+start
+:Inserir email/senha;
+:POST /auth/login;
+if (Credenciais válidas?) then (Sim)
+  :Gerar token JWT;
+  :Registrar log de acesso;
+  :Carregar dashboard;
+  :Selecionar "Ver Prontuário";
+  :GET /records/me;
+  if (Consentimento LGPD ativo?) then (Sim)
+    :Exibir histórico clínico\n+ prescrições/exames;
+  else (Não)
+    :Negar acesso (403)\n+ instrução de consentimento;
+  endif
+else (Não)
+  :Exibir erro de login;
+  :Retornar ao formulário;
+endif
+stop
+@enduml

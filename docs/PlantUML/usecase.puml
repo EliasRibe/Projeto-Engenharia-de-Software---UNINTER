@@ -1,0 +1,60 @@
+@startuml SGHSS – VidaPlus: Casos de Uso 
+
+title SGHSS – VidaPlus: Casos de Uso 
+
+left to right direction
+actor "Paciente" as Paciente
+actor "Profissional de Saúde" as Prof
+actor "Administrador" as Adm
+
+rectangle "SGHSS – VidaPlus" {
+  usecase "Cadastrar/Atualizar Dados\n(LGPD)" as UC1
+  usecase "Autenticar-se (Login)" as UC2
+  usecase "Agendar Consulta\n(presencial/telemedicina)" as UC3
+  usecase "Cancelar Consulta" as UC4
+  usecase "Visualizar Histórico Clínico\n(Prontuário/Exames/Prescrições)" as UC5
+  usecase "Gerenciar Agenda\n(Slots/Disponibilidade)" as UC6
+  usecase "Registrar Atendimento\n(presencial/telemedicina)" as UC7
+  usecase "Atualizar Prontuário\n(versa̧o + trilha de auditoria)" as UC8
+  usecase "Emitir Prescrição Digital" as UC9
+  usecase "Gerenciar Cadastros\n(Pacientes/Profissionais)" as UC10
+  usecase "Gerenciar Leitos e Internações" as UC11
+  usecase "Gerir Suprimentos / Estoque" as UC12
+  usecase "Gerar Relatórios\n(financeiros/operacionais)" as UC13
+  usecase "Controlar Perfis e Acessos (RBAC)" as UC14
+  usecase "Auditar Acessos e Ações" as UC15
+  usecase "Notificar Paciente\n(confirmação/cancelamento/resultado)" as UC16
+  usecase "Dashboards de Indicadores" as UC17
+}
+
+' Associações por ator
+Paciente --> UC1
+Paciente --> UC2
+Paciente --> UC3
+Paciente --> UC4
+Paciente --> UC5
+
+Prof --> UC2
+Prof --> UC6
+Prof --> UC7
+Prof --> UC8
+Prof --> UC9
+Prof --> UC17
+
+Adm --> UC2
+Adm --> UC10
+Adm --> UC11
+Adm --> UC12
+Adm --> UC13
+Adm --> UC14
+Adm --> UC15
+Adm --> UC17
+
+' Relações include/extend
+UC3 .> UC16 : <<include>>
+UC4 .> UC16 : <<include>>
+UC7 .> UC8 : <<include>>
+UC8 .> UC9 : <<extend>>
+UC5 .> UC1 : <<include>>\n(verificar consentimento)
+UC10 .> UC15 : <<include>>
+@enduml

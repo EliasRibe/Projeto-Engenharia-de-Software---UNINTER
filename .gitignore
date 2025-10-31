@@ -1,0 +1,9 @@
+@"
+node_modules/
+*.log
+package-lock.json
+.env
+__pycache__/
+artifacts/
+" @ | Out-File -Encoding utf8 .gitignore
+

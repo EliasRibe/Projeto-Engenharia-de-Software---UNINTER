@@ -1,0 +1,99 @@
+@startuml SGHSS – VidaPlus: Diagrama de Classes (núcleo)
+
+title SGHSS – VidaPlus: Diagrama de Classes (núcleo)
+
+skinparam classAttributeIconSize 0
+left to right direction
+
+abstract class Usuario {
+  +id: UUID
+  +nome: string
+  +email: string
+  +telefone: string
+  +senhaHash: string
+  +ativo: bool
+  +perfil: enum /* Admin, Profissional, Paciente */
+}
+
+class Paciente {
+  +cpf: string
+  +dataNascimento: date
+  +endereco: string
+  +consentimentoLGPD: bool
+}
+
+class Profissional {
+  +tipo: enum /* Medico, Enfermeiro, Tecnico */
+  +registroConselho: string
+  +especialidade: string
+}
+
+class Administrador {
+  +nivelAcesso: string
+}
+
+class Consulta {
+  +id: UUID
+  +dataHora: datetime
+  +tipo: enum /* Presencial, Telemedicina */
+  +status: enum /* Agendada, Cancelada, Concluida */
+}
+
+class Prontuario {
+  +id: UUID
+  +diagnostico: string
+  +observacoes: text
+  +dataRegistro: datetime
+  +versao: int
+}
+
+class Prescricao {
+  +id: UUID
+  +medicamento: string
+  +dosagem: string
+  +validade: date
+  +assinaturaDigital: string
+}
+
+class Leito {
+  +id: UUID
+  +numero: string
+  +status: enum /* Livre, Ocupado, Manutencao */
+}
+
+class Internacao {
+  +id: UUID
+  +dataEntrada: datetime
+  +dataAlta: datetime
+  +status: enum /* Ativa, Alta */
+}
+
+class Suprimento {
+  +id: UUID
+  +nome: string
+  +estoqueAtual: number
+  +estoqueMinimo: number
+}
+
+class Auditoria {
+  +id: UUID
+  +usuarioId: UUID
+  +acao: string
+  +recurso: string
+  +timestamp: datetime
+  +ip: string
+  +sucesso: bool
+}
+
+Usuario <|-- Paciente
+Usuario <|-- Profissional
+Usuario <|-- Administrador
+
+Paciente "1" -- "0..*" Consulta : agenda
+Profissional "1" -- "0..*" Consulta : atende
+Consulta "1" -- "1" Prontuario : gera
+Prontuario "1" -- "0..*" Prescricao : emite
+Administrador "1" -- "0..*" Auditoria : registra
+Leito "1" -- "0..*" Internacao : aloca
+Administrador "1" -- "0..*" Suprimento : gerencia
+@enduml

@@ -1,0 +1,199 @@
+name: SGHSS QA CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  newman:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Postman collections
+        id: has_postman
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(test_functional/postman/*.postman_collection.json)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.has_postman.outputs.found == 'true'
+        with:
+          node-version: 18
+
+      - if: steps.has_postman.outputs.found == 'true'
+        run: npm i -g newman
+
+      - name: Run Postman collections (Newman)
+        if: steps.has_postman.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -e
+          shopt -s nullglob
+          for c in test_functional/postman/*.postman_collection.json; do
+            env_file="${c%.postman_collection.json}.env.json"
+            if [ -f "$env_file" ]; then
+              newman run "$c" -e "$env_file" --reporters cli,junit --reporter-junit-export newman.xml
+            else
+              newman run "$c" --reporters cli,junit --reporter-junit-export newman.xml
+            fi
+          done
+
+      - name: Upload Newman report
+        if: steps.has_postman.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: newman.xml
+          if-no-files-found: ignore
+
+  cypress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Cypress specs (UI/A11y)
+        id: has_cy
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(test_functional/cypress/**/*.cy.js test_accessibility/cypress-axe/**/*.cy.js)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.has_cy.outputs.found == 'true'
+        with:
+          node-version: 18
+
+      - name: Install deps (fallback)
+        if: steps.has_cy.outputs.found == 'true'
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm i
+          else
+            npm init -y
+            npm i -D cypress cypress-axe
+          fi
+
+      - name: Run Cypress (UI + A11y)
+        if: steps.has_cy.outputs.found == 'true'
+        run: |
+          npx cypress run --spec "test_functional/cypress/**/*.cy.js,test_accessibility/cypress-axe/**/*.cy.js" || true
+
+      - name: Upload Cypress videos
+        if: steps.has_cy.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+
+      - name: Upload Cypress screenshots
+        if: steps.has_cy.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+
+  zap_baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve ZAP target
+        id: zaptarget
+        shell: bash
+        run: |
+          TARGET="${{ vars.ZAP_TARGET }}"
+          if [ -z "$TARGET" ] && [ -f test_security/zap/zap-baseline.target ]; then
+            TARGET=$(tr -d '\r\n' < test_security/zap/zap-baseline.target)
+          fi
+          if [ -n "$TARGET" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "ZAP_TARGET=$TARGET" >> $GITHUB_ENV
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: ZAP Baseline Scan
+        if: steps.zaptarget.outputs.found == 'true'
+        uses: zaproxy/action-baseline@v0.11.0
+        with:
+          target: ${{ env.ZAP_TARGET }}
+          cmd_options: '-a -m 5'
+
+      - name: Upload ZAP report
+        if: steps.zaptarget.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report_html.html
+          if-no-files-found: ignore
+
+  locust_smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Locust file
+        id: has_locust
+        shell: bash
+        run: |
+          if [ -f test_performance/locust/locustfile.py ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.has_locust.outputs.found == 'true'
+        with:
+          python-version: '3.10'
+
+      - name: Install Locust
+        if: steps.has_locust.outputs.found == 'true'
+        shell: bash
+        run: |
+          pip install --upgrade pip
+          if [ -f test_performance/locust/requirements.txt ]; then
+            pip install -r test_performance/locust/requirements.txt
+          else
+            pip install locust
+          fi
+
+      - name: Run Locust (smoke)
+        if: steps.has_locust.outputs.found == 'true'
+        env:
+          PERF_HOST: ${{ vars.PERF_HOST || 'http://localhost:3000' }}
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          locust -f test_performance/locust/locustfile.py \
+            --headless -u 20 -r 5 -t 2m --host "${PERF_HOST}" \
+            --csv=artifacts/locust --exit-code-on-error 1 || true
+
+      - name: Upload Locust artifacts
+        if: steps.has_locust.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: locust-artifacts
+          path: artifacts
+          if-no-files-found: ignore

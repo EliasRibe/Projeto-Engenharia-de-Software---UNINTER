@@ -1,0 +1,29 @@
+{
+  "name": "sghss_qa",
+  "version": "1.0.0",
+  "description": "SGHSS QA — automação (API/UI), desempenho, segurança e acessibilidade",
+  "main": "index.js",
+  "private": true,
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node mock-server.js",
+    "mock": "node mock-server.js",
+    "newman": "newman run test_functional/postman/SGHSS_API.postman_collection.json",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "locust": "locust -f test_performance/locust/locustfile.py --headless -u 20 -r 5 -t 1m --host http://localhost:3000",
+    "test": "echo \"No unit tests for now\" && exit 0"
+  },
+  "keywords": [],
+  "author": "Elias Ribe",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "cypress": "^13.7.0",
+    "cypress-axe": "^1.5.0"
+  }
+}
