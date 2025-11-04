@@ -1,27 +1,27 @@
 from locust import HttpUser, task, between
+import random, datetime, json
 
 class SGHSSUser(HttpUser):
-    # tempo aleatório entre requisições
-    wait_time = between(1, 3)
+    wait_time = between(0.2, 1.0)
+    token = None
 
     def on_start(self):
-        """Executa uma vez ao iniciar: login simulado"""
-        self.client.post("/auth/login", json={
-            "email": "teste@vida.plus",
-            "password": "Senha@123"
-        })
+        # login (pega token)
+        with self.client.post("/auth/login", json={"email":"paciente@vida.plus","password":"123456"}, catch_response=True) as r:
+            if r.status_code == 200:
+                self.token = r.json().get("token")
 
     @task(3)
-    def listar_prontuarios(self):
-        """Consulta prontuários (requisição leve, frequente)"""
-        self.client.get("/records?patientId=123", name="GET /records")
+    def criar_agendamento(self):
+        if not self.token: return
+        date = (datetime.datetime.utcnow() + datetime.timedelta(minutes=random.randint(1,60))).isoformat()
+        headers = {"Authorization": f"Bearer {self.token}"}
+        payload = {"patientId": "p1", "date": date, "type": "Presencial"}
+        self.client.post("/appointments", headers=headers, json=payload, name="/appointments")
 
     @task(1)
-    def agendar_consulta(self):
-        """Cria agendamento (requisição mais pesada)"""
-        self.client.post("/appointments", json={
-            "patientId": 123,
-            "doctorId": 45,
-            "slot": "2025-10-24T14:30:00Z"
-        }, name="POST /appointments")
-
+    def consultar_records(self):
+        if not self.token: return
+        headers = {"Authorization": f"Bearer {self.token}"}
+        self.client.put("/records/r1", headers=headers, json={"diagnostico":"ok","observacoes":"perf"}, name="/records:update")
+        
