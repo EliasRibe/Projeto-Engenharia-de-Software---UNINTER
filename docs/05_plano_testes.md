@@ -45,7 +45,7 @@ Este plano detalha **o que será testado** no SGHSS – VidaPlus, descrevendo os
 | RF007     | CT006            | Postman                  |
 | RF008     | CT007            | Cypress                  |
 | RNF001    | CT-PERF-01       | Locust/JMeter            |
-| RNF002    | CT-A11Y-01       | Cypress + axe            |
+| RNF006    | CT-A11Y-01       | Cypress + axe            |
 | RNF003    | CT-SEC-05        | ZAP                      |
 
 ---
