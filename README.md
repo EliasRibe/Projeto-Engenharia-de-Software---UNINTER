@@ -29,7 +29,15 @@ Sistema de Gestão Hospitalar e de Serviços de Saúde (**SGHSS**) — repositó
 ``` 
 ├── .github/
 │   └── workflows/
-│       └── ci.yml
+│       └── ci.yml                   # Pipeline QA completo (Newman, Cypress, Locust, ZAP)
+│
+├── artifacts/                       # Saída dos testes automáticos
+│   ├── graphs/                      # Gráficos gerados pelo Locust
+│   ├── videos/                      # Vídeos Cypress
+│   ├── screenshots/                 # Prints Cypress
+│   ├── locust/                      # CSV/HTML do teste de performance
+│   ├── newman.xml                   # Relatório JUnit do Postman
+│   └── zap_report.html              # Relatório OWASP ZAP
 │
 ├── docs/
 │   ├── PlantUML/
@@ -46,20 +54,39 @@ Sistema de Gestão Hospitalar e de Serviços de Saúde (**SGHSS**) — repositó
 │   ├── 02_requisitos.md
 │   ├── 03_modelagem_uml.md
 │   ├── 04_estrategia_testes.md
-│   └── 05_plano_testes.md
+│   ├── 05_plano_testes.md
+│   └── 06_relatorios_resultados.md  # Relatório consolidado (QA cycle)
 │
 ├── test_functional/
-│   ├── cypress/e2e/login.cy.js
-│   └── postman/SGHSS_API.postman_collection.json
+│   ├── postman/
+│   │   ├── SGHSS_API.postman_collection.json
+│   │   └── SGHSS_ENV.json
+│   └── cypress/
+│       ├── e2e/
+│       │   └── login.cy.js
+│       ├── support/
+│       │   └── e2e.js
+│       └── cypress.config.js
 │
-├── test_performance/locust/locustfile.py
-├── test_security/zap/zap-baseline.target
-├── test_accessibility/cypress-axe/accessibility.cy.js
-├── LICENCE
-├── mock-server.js
+├── test_accessibility/
+│   └── cypress-axe/
+│       └── accessibility.cy.js
+│
+├── test_performance/
+│   └── locust/
+│       ├── locustfile.py
+│       └── requirements.txt
+│
+├── test_security/
+│   └── zap/
+│       └── zap-baseline.target
+│
+├── mock-server.js                   # Mock backend para os testes
 ├── package.json
 ├── package-lock.json
+├── LICENCE
 └── README.md
+
 ``` 
 
 ## 🧰 Pré‑requisitos
@@ -91,8 +118,8 @@ pip install -r requirements.txt
 locust -f locustfile.py --headless -u 200 -r 20 -t 10m --host http://localhost:3000
 
 4) Segurança (OWASP ZAP Baseline)
-# Exemplo com GitHub Action ou Docker
-# docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000 -a -r zap_report.html
+Exemplo com GitHub Action ou Docker:
+docker run -t owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000 -a -r zap_report.html
 
 5) Acessibilidade (axe-core via Cypress)
 npx cypress run --spec "test_accessibility/cypress-axe/**/*.cy.js"
