@@ -1,0 +1,24 @@
+# Requisitos Python e ferramentas externas
+
+# ---- Testes de Desempenho ----
+locust==2.31.3
+
+# ---- Dependências de suporte ----
+requests>=2.31.0
+urllib3>=2.2.1
+certifi>=2024.2.2
+charset-normalizer>=3.3.2
+idna>=3.7
+
+# ---- Ambiente e automação ----
+python-dotenv>=1.0.1
+pandas>=2.2.2
+matplotlib>=3.9.0
+
+# ---- Testes via Docker ----
+# As seguintes imagens são usadas no pipeline CI/CD:
+#   - ghcr.io/zaproxy/zaproxy:stable   (OWASP ZAP)
+#   - node:18                          (Newman / Cypress)
+#   - python:3.10                      (Locust Runner)
+#   - alpine / ubuntu-latest           (ambientes GitHub Actions)
+# Elas são baixadas automaticamente via Docker pull  ou pelo workflow GitHub Actions
